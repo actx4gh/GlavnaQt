@@ -24,7 +24,7 @@
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/GlavnaQt.git
+   git clone https://github.com/actx4gh/GlavnaQt.git
    cd GlavnaQt
    ```
 
