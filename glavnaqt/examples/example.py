@@ -8,10 +8,10 @@ import logging
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication
 
-from core.config import UIConfiguration  # Updated to directly import the class
-from core.config_manager import all_configurations
-from ui.main_window import MainWindow
-from ui.transitions import perform_transition
+from glavnaqt.core.config import UIConfiguration  # Updated to directly import the class
+from glavnaqt.core.config_manager import all_configurations
+from glavnaqt.ui.main_window import MainWindow
+from glavnaqt.ui.transitions import perform_transition
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')

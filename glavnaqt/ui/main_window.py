@@ -4,14 +4,14 @@ import time
 from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtWidgets import QMainWindow, QSplitter
 
-from ui.collapsible_splitter import CollapsibleSplitter
-from core.config import UIConfiguration
-from core.event_handling import setup_event_handling, ResizeSignal, handle_resize_event
-from ui.widget_adjustment import adjust_font_and_widget_sizes
-from core.layout import initialize_geometries
-from ui.helpers import apply_font
-from ui.panel import PanelLabel, EXPANDING_FIXED, EXPANDING_EXPANDING, FIXED_EXPANDING
-from ui.status_bar_manager import StatusBarManager
+from glavnaqt.ui.collapsible_splitter import CollapsibleSplitter
+from glavnaqt.core.config import UIConfiguration
+from glavnaqt.core.event_handling import setup_event_handling, ResizeSignal, handle_resize_event
+from glavnaqt.ui.widget_adjustment import adjust_font_and_widget_sizes
+from glavnaqt.core.layout import initialize_geometries
+from glavnaqt.ui.helpers import apply_font
+from glavnaqt.ui.panel import PanelLabel, EXPANDING_FIXED, EXPANDING_EXPANDING, FIXED_EXPANDING
+from glavnaqt.ui.status_bar_manager import StatusBarManager
 
 logger = logging.getLogger(__name__)
 

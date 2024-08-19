@@ -2,7 +2,7 @@ import logging
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QSplitter
-from ui.splitter_handle import CollapsibleSplitterHandle
+from glavnaqt.ui.splitter_handle import CollapsibleSplitterHandle
 
 logger = logging.getLogger(__name__)
 

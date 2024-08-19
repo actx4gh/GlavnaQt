@@ -4,8 +4,8 @@ import time
 from PyQt6.QtGui import QFont, QFontMetrics
 from PyQt6.QtWidgets import QLabel
 
-from ui.font_scaling import calculate_scaling_factor
-from ui.helpers import get_qlabel, apply_font
+from glavnaqt.ui.font_scaling import calculate_scaling_factor
+from glavnaqt.ui.helpers import get_qlabel, apply_font
 
 logger = logging.getLogger(__name__)
 
