@@ -2,15 +2,17 @@ import logging
 import time
 
 from PyQt6.QtCore import QTimer, Qt
-from PyQt6.QtWidgets import QMainWindow, QSplitter
-
-from glavnaqt.ui.collapsible_splitter import CollapsibleSplitter
+from PyQt6.QtWidgets import QMainWindow, QSplitter, QSizePolicy, QStatusBar
+from glavnaqt.core.event_bus import EventBus
+from glavnaqt.core.logging_utils import log_widget_hierarchy
 from glavnaqt.core.config import UIConfiguration
 from glavnaqt.core.event_handling import setup_event_handling, ResizeSignal, handle_resize_event
-from glavnaqt.ui.widget_adjustment import adjust_font_and_widget_sizes
 from glavnaqt.core.layout import initialize_geometries
+from glavnaqt.ui.collapsible_splitter import CollapsibleSplitter
 from glavnaqt.ui.helpers import apply_font
+from glavnaqt.ui.widget_adjustment import adjust_font_and_widget_sizes
 from glavnaqt.ui.panel import PanelLabel, EXPANDING_FIXED, EXPANDING_EXPANDING, FIXED_EXPANDING
+from glavnaqt.ui.section_widget import SectionWidget
 from glavnaqt.ui.status_bar_manager import StatusBarManager
 
 logger = logging.getLogger(__name__)
@@ -19,36 +21,23 @@ logger = logging.getLogger(__name__)
 class MainWindow(QMainWindow):
     """
     Main application window for the UI, managing layout, splitters, and collapsible sections.
-
-    Attributes:
-        ui_config (UIConfiguration): Configuration object containing UI settings.
-        is_initialized (bool): Flag indicating whether the UI has been fully initialized.
-        main_content_widget (PanelLabel): The main content panel in the UI.
-        suppress_logging (bool): Flag to suppress logging during certain operations.
-        resize_signal (ResizeSignal): Custom signal for handling resize events.
-        last_resize_size (QSize): The last recorded size of the window.
-        size_change_threshold (int): Threshold for significant size changes to trigger layout adjustments.
-        is_resizing (bool): Flag indicating whether the window is currently being resized.
-        suppress_resize_event (bool): Flag to suppress the resize event handling.
-        final_size_timer (QTimer): Timer for delaying final size logging after a resize event.
-        last_resize_log_time (float): The last time a resize event was logged.
-        resize_log_threshold (float): Minimum time between logging resize events.
-        status_bar_manager (StatusBarManager): Manager for the status bar, if enabled.
     """
+    top_section = SectionWidget("top")
+    left_section = SectionWidget("left")
+    right_section = SectionWidget("right")
+    main_content_section = SectionWidget("main_content")
+    status_section = SectionWidget("status")
 
     def __init__(self, ui_config: UIConfiguration):
         """
         Initializes the MainWindow with the provided UI configuration.
-
-        Args:
-            ui_config (UIConfiguration): The configuration object containing UI settings.
         """
         logger.debug('Initializing MainWindow')
         super().__init__()
 
         self.ui_config = ui_config
+        self.event_bus = EventBus()
         self.is_initialized = False
-        self.main_content_widget = None
         self.suppress_logging = False
         self.resize_signal = ResizeSignal()
         self.last_resize_size = self.size()
@@ -64,13 +53,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Collapsible Splitters")
         self.setGeometry(*self.ui_config.window_position, *self.ui_config.window_size)
 
-        self.top_splitter = None
-        self.bottom_splitter = None
-        self.left_splitter = None
-        self.right_splitter = None
         self._status_bar_manager = None
-        self.setup_ui(self.ui_config.collapsible_sections)
+        self._initialize_ui(self.ui_config.collapsible_sections)
         setup_event_handling(self, self.resize_signal)
+        self.event_bus.emit('initialize', self)
         self.setMinimumSize(100, 100)
         self.finalize_initialization()
 
@@ -92,56 +78,11 @@ class MainWindow(QMainWindow):
         Initializes the geometries of the UI components after a delay to ensure proper layout.
         """
         initialize_geometries(self)
+        if self.status_bar_manager:
+            self.status_section = self.status_bar_manager.status_bar
         self.adjust_layout()
         self.is_initialized = True
         logger.debug('MainWindow initialization complete')
-
-    def setup_ui(self, collapsible_sections):
-        """
-        Sets up the UI by creating the necessary splitters and panels based on the collapsible sections.
-        """
-        self.central_widget = QSplitter(Qt.Orientation.Vertical)
-        self.setCentralWidget(self.central_widget)
-
-        vertical_splitter = self.central_widget
-
-        # Handle the "top" section
-        if "top" in collapsible_sections:
-            self.top_splitter = self.create_splitter(Qt.Orientation.Vertical, "top")
-            top_widget = PanelLabel(
-                collapsible_sections["top"]["text"],
-                "top_bar",
-                EXPANDING_FIXED,
-                font_name=self.ui_config.font_face,
-                font_size=self.ui_config.font_size,
-                alignment=self.ui_config.get_section_alignment("top")
-            )
-            apply_font(self.ui_config.font_face, self.ui_config.font_size, top_widget)
-            self.top_splitter.addWidget(top_widget)
-            main_content_splitter = self.create_main_content_splitter(collapsible_sections)
-            self.top_splitter.addWidget(main_content_splitter)
-            vertical_splitter.addWidget(self.top_splitter)
-        else:
-            main_content_splitter = self.create_main_content_splitter(collapsible_sections)
-            vertical_splitter.addWidget(main_content_splitter)
-
-        # Handle the "bottom" section
-        if "bottom" in collapsible_sections:
-            self.bottom_splitter = self.create_splitter(Qt.Orientation.Vertical, "bottom")
-            self.bottom_splitter.addWidget(vertical_splitter)
-            bottom_widget = PanelLabel(
-                collapsible_sections["bottom"]["text"],
-                "status_bar",
-                EXPANDING_FIXED,
-                font_name=self.ui_config.font_face,
-                font_size=self.ui_config.font_size,
-                alignment=self.ui_config.get_section_alignment("bottom")
-            ) if not self.status_bar_manager else self.status_bar_manager.status_bar
-            apply_font(self.ui_config.font_face, self.ui_config.font_size, bottom_widget)
-            self.bottom_splitter.addWidget(bottom_widget)
-            self.setCentralWidget(self.bottom_splitter)
-        else:
-            self.setCentralWidget(vertical_splitter)
 
     def update_ui(self, collapsible_sections):
         """
@@ -156,57 +97,74 @@ class MainWindow(QMainWindow):
             self.setCentralWidget(None)
             old_central_widget.deleteLater()
 
-        # Clear references to old splitters
-        self.top_splitter = None
-        self.bottom_splitter = None
-        self.left_splitter = None
-        self.right_splitter = None
+        # Reset all sections
+        self.top_section = (None, None)
+        self.left_section = (None, None)
+        self.right_section = (None, None)
+        self.main_content_section = (None, None)
+        self.status_section = (None, None)
 
-        # Create a new temporary central widget
-        temporary_central_widget = QSplitter(Qt.Orientation.Vertical)
+        # Call the shared UI setup method
+        self._initialize_ui(collapsible_sections)
+        QTimer.singleShot(0, self.adjust_layout)
 
-        # Set up the UI within the temporary widget
-        vertical_splitter = temporary_central_widget
+    def _initialize_ui(self, collapsible_sections):
+        """
+        Initializes the UI based on the provided collapsible sections.
+        This method is shared by both setup_ui and update_ui to avoid code duplication.
+        """
+        self.central_widget = QSplitter(Qt.Orientation.Vertical)
+        self.setCentralWidget(self.central_widget)
 
+        vertical_splitter = self.central_widget
+
+        # Handle the "top" section
         if "top" in collapsible_sections:
             top_splitter = self.create_splitter(Qt.Orientation.Vertical, "top")
-            top_widget = PanelLabel(
-                collapsible_sections["top"]["text"],
-                "top_bar",
-                EXPANDING_FIXED,
-                font_name=self.ui_config.font_face,
-                font_size=self.ui_config.font_size,
-                alignment=self.ui_config.get_section_alignment("top")
-            )
+            top_widget = collapsible_sections["top"].get("widget")
+            if not top_widget:
+                top_widget = PanelLabel(
+                    collapsible_sections["top"].get("text"),
+                    "top_bar",
+                    EXPANDING_FIXED,
+                    font_name=self.ui_config.font_face,
+                    font_size=self.ui_config.font_size,
+                    alignment=self.ui_config.get_section_alignment("top")
+                )
             apply_font(self.ui_config.font_face, self.ui_config.font_size, top_widget)
-            top_splitter.addWidget(top_widget)
+            self.top_section = (top_splitter, top_widget)
             main_content_splitter = self.create_main_content_splitter(collapsible_sections)
             top_splitter.addWidget(main_content_splitter)
             vertical_splitter.addWidget(top_splitter)
-            self.top_splitter = top_splitter  # Store reference to prevent premature deletion
         else:
             main_content_splitter = self.create_main_content_splitter(collapsible_sections)
             vertical_splitter.addWidget(main_content_splitter)
 
+        # Handle the "bottom" section (status bar)
         if "bottom" in collapsible_sections:
             bottom_splitter = self.create_splitter(Qt.Orientation.Vertical, "bottom")
             bottom_splitter.addWidget(vertical_splitter)
-            bottom_widget = PanelLabel(
-                collapsible_sections["bottom"]["text"],
-                "status_bar",
-                EXPANDING_FIXED,
-                font_name=self.ui_config.font_face,
-                font_size=self.ui_config.font_size,
-                alignment=self.ui_config.get_section_alignment("bottom")
-            ) if not self.status_bar_manager else self.status_bar_manager.status_bar
-            apply_font(self.ui_config.font_face, self.ui_config.font_size, bottom_widget)
-            bottom_splitter.addWidget(bottom_widget)
-            temporary_central_widget = bottom_splitter
-            self.bottom_splitter = bottom_splitter  # Store reference to prevent premature deletion
+            bottom_widget = collapsible_sections["bottom"].get("widget")
+            if not bottom_widget:
+                if self._status_bar_manager is None:
+                    bottom_widget = PanelLabel(
+                        f'created in main_window.py: {collapsible_sections["bottom"].get("text")}',
+                        "status_bar",
+                        EXPANDING_FIXED,
+                        font_name=self.ui_config.font_face,
+                        font_size=self.ui_config.font_size,
+                        alignment=self.ui_config.get_section_alignment("bottom")
+                    )
+                else:
+                    bottom_widget = self.status_bar_manager.status_bar
 
-        # Replace the current central widget with the new one and adjust the layout
-        self.setCentralWidget(temporary_central_widget)
-        QTimer.singleShot(0, self.adjust_layout)
+
+            apply_font(self.ui_config.font_face, self.ui_config.font_size, bottom_widget)
+            apply_font(self.ui_config.font_face, self.ui_config.font_size, bottom_widget)
+            self.status_section = (bottom_splitter, bottom_widget)
+            self.setCentralWidget(bottom_splitter)
+        else:
+            self.setCentralWidget(vertical_splitter)
 
     def create_main_content_splitter(self, collapsible_sections):
         """
@@ -219,50 +177,58 @@ class MainWindow(QMainWindow):
             QSplitter: The splitter managing the main content and sidebars.
         """
         horizontal_splitter = QSplitter(Qt.Orientation.Horizontal)
-
-        self.main_content_widget = PanelLabel(
-            collapsible_sections["main_content"]["text"],
-            "main_content",
-            EXPANDING_EXPANDING,
-            font_name=self.ui_config.font_face,
-            font_size=self.ui_config.font_size,
-            alignment=self.ui_config.get_section_alignment("main_content")
-        )
-        apply_font(self.ui_config.font_face, self.ui_config.font_size, self.main_content_widget)
+        main_content_widget = collapsible_sections["main_content"].get("widget")
+        if not main_content_widget:
+            main_content_widget = PanelLabel(
+                collapsible_sections["main_content"].get("text"),
+                "main_content",
+                EXPANDING_EXPANDING,
+                font_name=self.ui_config.font_face,
+                font_size=self.ui_config.font_size,
+                alignment=self.ui_config.get_section_alignment("main_content")
+            )
+        apply_font(self.ui_config.font_face, self.ui_config.font_size, main_content_widget)
+        self.main_content_section = main_content_widget
 
         # Add the left sidebar if defined
         if "left" in collapsible_sections:
-            self.left_splitter = self.create_splitter(Qt.Orientation.Horizontal, "left")
-            left_sidebar_widget = PanelLabel(
-                collapsible_sections["left"]["text"],
-                "left_sidebar",
-                FIXED_EXPANDING,
-                font_name=self.ui_config.font_face,
-                font_size=self.ui_config.font_size,
-                alignment=self.ui_config.get_section_alignment("left")
-            )
+            left_splitter = self.create_splitter(Qt.Orientation.Horizontal, "left")
+            left_sidebar_widget = collapsible_sections["left"].get("widget")
+            if not left_sidebar_widget:
+                left_sidebar_widget = PanelLabel(
+                    collapsible_sections["left"].get("text"),
+                    "left_sidebar",
+                    FIXED_EXPANDING,
+                    font_name=self.ui_config.font_face,
+                    font_size=self.ui_config.font_size,
+                    alignment=self.ui_config.get_section_alignment("left")
+                )
             apply_font(self.ui_config.font_face, self.ui_config.font_size, left_sidebar_widget)
-            self.left_splitter.addWidget(left_sidebar_widget)
-            self.left_splitter.addWidget(self.main_content_widget)
-            horizontal_splitter.addWidget(self.left_splitter)
+            self.left_section = (left_splitter, left_sidebar_widget)
+            left_splitter.addWidget(main_content_widget)
+            self.main_content_section = left_splitter
+            horizontal_splitter.addWidget(left_splitter)
         else:
-            horizontal_splitter.addWidget(self.main_content_widget)
+            horizontal_splitter.addWidget(main_content_widget)
+            self.main_content_section = horizontal_splitter
 
         # Add the right sidebar if defined
         if "right" in collapsible_sections:
-            self.right_splitter = self.create_splitter(Qt.Orientation.Horizontal, "right")
-            self.right_splitter.addWidget(horizontal_splitter)
-            right_sidebar_widget = PanelLabel(
-                collapsible_sections["right"]["text"],
-                "right_sidebar",
-                FIXED_EXPANDING,
-                font_name=self.ui_config.font_face,
-                font_size=self.ui_config.font_size,
-                alignment=self.ui_config.get_section_alignment("right")
-            )
+            right_splitter = self.create_splitter(Qt.Orientation.Horizontal, "right")
+            right_splitter.addWidget(horizontal_splitter)
+            right_sidebar_widget = collapsible_sections["right"].get("widget")
+            if not right_sidebar_widget:
+                right_sidebar_widget = PanelLabel(
+                    collapsible_sections["right"]["text"],
+                    "right_sidebar",
+                    FIXED_EXPANDING,
+                    font_name=self.ui_config.font_face,
+                    font_size=self.ui_config.font_size,
+                    alignment=self.ui_config.get_section_alignment("right")
+                )
             apply_font(self.ui_config.font_face, self.ui_config.font_size, right_sidebar_widget)
-            self.right_splitter.addWidget(right_sidebar_widget)
-            return self.right_splitter
+            self.right_section = (right_splitter, right_sidebar_widget)
+            return right_splitter
 
         return horizontal_splitter
 
@@ -280,6 +246,7 @@ class MainWindow(QMainWindow):
         logger.debug(f'Creating collapsible splitter for {identifier}')
         splitter = CollapsibleSplitter(orientation, identifier=identifier,
                                        handle_width=self.ui_config.splitter_handle_width)
+        splitter.setContentsMargins(0, 0, 0, 0)  # Ensure no marginsa
         splitter.splitterMoved.connect(lambda pos, index: self.handle_splitter_movement(splitter, pos, index))
         return splitter
 
@@ -306,12 +273,7 @@ class MainWindow(QMainWindow):
             self.status_bar_manager.update_status_bar()
 
     def resizeEvent(self, event):
-        """
-        Handles the window resize event, adjusting the layout and logging as necessary.
-
-        Args:
-            event (QResizeEvent): The resize event.
-        """
+        # Preserve the existing resize handling logic
         if self.suppress_resize_event:
             self.suppress_resize_event = False
             return
@@ -319,6 +281,7 @@ class MainWindow(QMainWindow):
         current_time = time.time()
         if not self.is_initialized or (current_time - self.last_resize_log_time > self.resize_log_threshold):
             logger.debug(f"Resize event handled, new size: {self.size()}")
+
         self.suppress_logging = True
         handle_resize_event(self, event)
         super().resizeEvent(event)
@@ -328,6 +291,10 @@ class MainWindow(QMainWindow):
         self.suppress_logging = False
         self.final_size_timer.start(200)
 
+        # Emit the resize event to the event bus
+        self.event_bus.emit('resize', event)
+
+
     def adjust_layout(self):
         """
         Adjusts the layout of the window and its components, ensuring everything is resized appropriately.
@@ -336,7 +303,7 @@ class MainWindow(QMainWindow):
         if log_required:
             logger.debug("Entered adjust_layout.")
 
-        if not self.main_content_widget:
+        if not self.main_content_section:
             logger.error("main_content_widget is not initialized. Layout adjustment cannot proceed.")
             return
 

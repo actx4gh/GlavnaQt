@@ -1,7 +1,5 @@
 import logging
 
-from PyQt6.QtWidgets import QLabel
-
 logger = logging.getLogger(__name__)
 
 
@@ -12,24 +10,32 @@ def initialize_geometries(ui_window):
     Args:
         ui_window (QMainWindow): The main window instance containing the UI components.
     """
-    if ui_window.main_content_widget:
-        ui_window.initial_main_content_width = ui_window.main_content_widget.width()
+    # Access main content widget from the section_mapj
+    _, main_content_widget = ui_window.main_content_section
+    if main_content_widget:
+        ui_window.initial_main_content_width = main_content_widget.width()
         logger.debug(f"Initial main content width: {ui_window.initial_main_content_width}px")
 
-    if ui_window.left_splitter and ui_window.left_splitter.count() > 0:
-        ui_window.initial_left_sidebar_width = ui_window.left_splitter.widget(0).width()
+    # Access left sidebar and main content from the left splitter in the section_map
+    left_splitter, left_sidebar = ui_window.left_section
+    if left_sidebar and left_splitter and left_splitter.count() > 0:
+        ui_window.initial_left_sidebar_width = left_sidebar.width()
         logger.debug(f"Initial left sidebar width: {ui_window.initial_left_sidebar_width}px")
 
-    if ui_window.right_splitter and ui_window.right_splitter.count() > 0:
-        ui_window.initial_right_sidebar_width = ui_window.right_splitter.widget(1).width()
+    # Access right sidebar and main content from the right splitter in the section_map
+    right_splitter, right_sidebar = ui_window.right_section
+    if right_sidebar and right_splitter and right_splitter.count() > 1:
+        ui_window.initial_right_sidebar_width = right_sidebar.width()
         logger.debug(f"Initial right sidebar width: {ui_window.initial_right_sidebar_width}px")
 
-    top_bar = ui_window.findChild(QLabel, "top_bar")
+    # Access top bar from the section_map
+    _, top_bar = ui_window.top_section
     if top_bar:
         ui_window.initial_top_bar_height = top_bar.height()
         logger.debug(f"Initial top bar height: {ui_window.initial_top_bar_height}px")
 
-    status_bar = ui_window.findChild(QLabel, "status_bar")
+    # Access status bar from the section_map
+    _, status_bar = ui_window.status_section
     if status_bar:
         ui_window.initial_status_bar_height = status_bar.height()
         logger.debug(f"Initial status bar height: {ui_window.initial_status_bar_height}px")

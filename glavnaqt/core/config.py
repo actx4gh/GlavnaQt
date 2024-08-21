@@ -71,10 +71,17 @@ class UIConfiguration:
                 self.enable_status_bar_manager == other.enable_status_bar_manager and
                 self.collapsible_sections == other.collapsible_sections)
 
-    def update_collapsible_section(self, section_name, text, alignment=ALIGN_CENTER):
+    def get_section_widget(self, section_name):
+        """
+        Returns the custom widget for the given section, if any.
+        """
+        return self.collapsible_sections.get(section_name, {}).get("widget")
+
+    def update_collapsible_section(self, section_name, text, alignment=ALIGN_CENTER, widget=None):
         self.collapsible_sections[section_name] = {
             "text": text,
-            "alignment": alignment
+            "alignment": alignment,
+            "widget": widget
         }
 
     def get_section_alignment(self, section_name):
@@ -109,6 +116,7 @@ class UIConfiguration:
 
     def __repr__(self):
         return f"UIConfiguration({self.replace_alignment_constants()})"
+
 
 """
 # Example Usage

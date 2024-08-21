@@ -7,7 +7,7 @@ import logging
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication
-
+from glavnaqt.core.logging_utils import log_widget_hierarchy
 from glavnaqt.core.config import UIConfiguration  # Updated to directly import the class
 from glavnaqt.core.config_manager import all_configurations
 from glavnaqt.ui.main_window import MainWindow
@@ -113,7 +113,7 @@ if __name__ == '__main__':
         splitter_handle_width=5,
         window_size=(800, 600),
         window_position=(150, 150),
-        enable_status_bar_manager=False,
+        enable_status_bar_manager=True,
         collapsible_sections={
             'main_content': {'text': 'Main Content', 'alignment': UIConfiguration.ALIGN_CENTER}
         }
