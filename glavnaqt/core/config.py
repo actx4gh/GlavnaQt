@@ -1,42 +1,39 @@
+# config.py
+
 from PyQt6.QtCore import Qt
 
+# Alignment constants for UI components
+ALIGN_CENTER = Qt.AlignmentFlag.AlignCenter
+ALIGN_LEFT = Qt.AlignmentFlag.AlignLeft
+ALIGN_RIGHT = Qt.AlignmentFlag.AlignRight
+ALIGN_TOP = Qt.AlignmentFlag.AlignTop
+ALIGN_BOTTOM = Qt.AlignmentFlag.AlignBottom
+ALIGN_VCENTER = Qt.AlignmentFlag.AlignVCenter
+ALIGN_HCENTER = Qt.AlignmentFlag.AlignHCenter
+ALIGN_JUSTIFY = Qt.AlignmentFlag.AlignJustify
+ALIGN_ABSOLUTE = Qt.AlignmentFlag.AlignAbsolute
+ALIGN_LEADING = Qt.AlignmentFlag.AlignLeading
+ALIGN_TRAILING = Qt.AlignmentFlag.AlignTrailing
+ALIGN_HORZ_MASK = Qt.AlignmentFlag.AlignHorizontal_Mask
+ALIGN_VERT_MASK = Qt.AlignmentFlag.AlignVertical_Mask
+
+ALIGNMENT_NAMES_REVERSE_LOOKUP = {
+    Qt.AlignmentFlag.AlignCenter: 'ALIGN_CENTER',
+    Qt.AlignmentFlag.AlignLeft: 'ALIGN_LEFT',
+    Qt.AlignmentFlag.AlignRight: 'ALIGN_RIGHT',
+    Qt.AlignmentFlag.AlignTop: 'ALIGN_TOP',
+    Qt.AlignmentFlag.AlignBottom: 'ALIGN_BOTTOM',
+    Qt.AlignmentFlag.AlignVCenter: 'ALIGN_VCENTER',
+    Qt.AlignmentFlag.AlignHCenter: 'ALIGN_HCENTER',
+    Qt.AlignmentFlag.AlignJustify: 'ALIGN_JUSTIFY',
+    Qt.AlignmentFlag.AlignAbsolute: 'ALIGN_ABSOLUTE',
+    Qt.AlignmentFlag.AlignLeading: 'ALIGN_LEADING',
+    Qt.AlignmentFlag.AlignTrailing: 'ALIGN_TRAILING',
+    Qt.AlignmentFlag.AlignHorizontal_Mask: 'ALIGN_HORZ_MASK',
+    Qt.AlignmentFlag.AlignVertical_Mask: 'ALIGN_VERT_MASK',
+}
 
 class UIConfiguration:
-    """
-    Configuration class for UI settings.
-    """
-
-    # Alignment constants for UI components
-    ALIGN_CENTER = Qt.AlignmentFlag.AlignCenter
-    ALIGN_LEFT = Qt.AlignmentFlag.AlignLeft
-    ALIGN_RIGHT = Qt.AlignmentFlag.AlignRight
-    ALIGN_TOP = Qt.AlignmentFlag.AlignTop
-    ALIGN_BOTTOM = Qt.AlignmentFlag.AlignBottom
-    ALIGN_VCENTER = Qt.AlignmentFlag.AlignVCenter
-    ALIGN_HCENTER = Qt.AlignmentFlag.AlignHCenter
-    ALIGN_JUSTIFY = Qt.AlignmentFlag.AlignJustify
-    ALIGN_ABSOLUTE = Qt.AlignmentFlag.AlignAbsolute
-    ALIGN_LEADING = Qt.AlignmentFlag.AlignLeading
-    ALIGN_TRAILING = Qt.AlignmentFlag.AlignTrailing
-    ALIGN_HORZ_MASK = Qt.AlignmentFlag.AlignHorizontal_Mask
-    ALIGN_VERT_MASK = Qt.AlignmentFlag.AlignVertical_Mask
-
-    ALIGNMENT_NAMES_REVERSE_LOOKUP = {
-        Qt.AlignmentFlag.AlignCenter: 'ALIGN_CENTER',
-        Qt.AlignmentFlag.AlignLeft: 'ALIGN_LEFT',
-        Qt.AlignmentFlag.AlignRight: 'ALIGN_RIGHT',
-        Qt.AlignmentFlag.AlignTop: 'ALIGN_TOP',
-        Qt.AlignmentFlag.AlignBottom: 'ALIGN_BOTTOM',
-        Qt.AlignmentFlag.AlignVCenter: 'ALIGN_VCENTER',
-        Qt.AlignmentFlag.AlignHCenter: 'ALIGN_HCENTER',
-        Qt.AlignmentFlag.AlignJustify: 'ALIGN_JUSTIFY',
-        Qt.AlignmentFlag.AlignAbsolute: 'ALIGN_ABSOLUTE',
-        Qt.AlignmentFlag.AlignLeading: 'ALIGN_LEADING',
-        Qt.AlignmentFlag.AlignTrailing: 'ALIGN_TRAILING',
-        Qt.AlignmentFlag.AlignHorizontal_Mask: 'ALIGN_HORZ_MASK',
-        Qt.AlignmentFlag.AlignVertical_Mask: 'ALIGN_VERT_MASK',
-    }
-
     def __init__(self,
                  font_face="Helvetica",
                  font_size=12,
@@ -57,7 +54,7 @@ class UIConfiguration:
         if "main_content" not in self.collapsible_sections:
             self.collapsible_sections["main_content"] = {
                 "text": "Main Content",
-                "alignment": self.ALIGN_CENTER
+                "alignment": ALIGN_CENTER
             }
 
     def __eq__(self, other):
@@ -77,7 +74,7 @@ class UIConfiguration:
         """
         return self.collapsible_sections.get(section_name, {}).get("widget")
 
-    def update_collapsible_section(self, section_name, text, alignment=ALIGN_CENTER, widget=None):
+    def update_collapsible_section(self, section_name, text=None, alignment=ALIGN_CENTER, widget=None):
         self.collapsible_sections[section_name] = {
             "text": text,
             "alignment": alignment,
@@ -85,7 +82,7 @@ class UIConfiguration:
         }
 
     def get_section_alignment(self, section_name):
-        return self.collapsible_sections.get(section_name, {}).get("alignment", self.ALIGN_CENTER)
+        return self.collapsible_sections.get(section_name, {}).get("alignment", ALIGN_CENTER)
 
     def replace_alignment_constants(self, data=None):
         """
@@ -108,7 +105,7 @@ class UIConfiguration:
             elif isinstance(d, tuple):
                 return f'({", ".join(map(replace_and_format, d))})'
             elif isinstance(d, Qt.AlignmentFlag):
-                return self.ALIGNMENT_NAMES_REVERSE_LOOKUP[d]
+                return ALIGNMENT_NAMES_REVERSE_LOOKUP[d]
             else:
                 return repr(d)
 
@@ -118,17 +115,8 @@ class UIConfiguration:
         return f"UIConfiguration({self.replace_alignment_constants()})"
 
 
-"""
-# Example Usage
-config = UIConfiguration(
-    font_face="Helvetica",
-    font_size=13,
-    window_size=(1024, 768),
-    window_position=(150, 150),
-    enable_status_bar_manager=False
-)
+# Singleton instance of UIConfiguration
+config = UIConfiguration()
 
-# Update and log the collapsible_sections with replaced alignment constants
-config.update_collapsible_section('left', 'Left Sidebar', config.ALIGN_CENTER)
-logger.debug(f'Transformed collapsible_sections: {config.replace_alignment_constants()}')
-"""
+# Expose only the singleton instance for external use
+__all__ = ['config']

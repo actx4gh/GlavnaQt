@@ -21,7 +21,7 @@ def perform_transition(mainWin, start_config, end_config):
     if mainWin.ui_config == start_config:
         logger.debug("Skipping redundant start_config application")
     else:
-        mainWin.update_ui(start_config.collapsible_sections)
+        mainWin.update_ui(start_config)
 
     QTimer.singleShot(5000, lambda: apply_end_config(mainWin, end_config))
 
@@ -36,4 +36,4 @@ def apply_end_config(mainWin, end_config):
     """
     # Log the end configuration being applied
     logger.debug(f'Applying end configuration: {end_config.replace_alignment_constants()}')
-    mainWin.update_ui(end_config.collapsible_sections)
+    mainWin.update_ui(end_config)
