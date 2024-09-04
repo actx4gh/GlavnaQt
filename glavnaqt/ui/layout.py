@@ -4,14 +4,13 @@ import time
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QSplitter, QWidget, QVBoxLayout
 
+from glavnaqt.core import logger
 from glavnaqt.core.logging_utils import log_widget_hierarchy
 from glavnaqt.ui.collapsible_splitter import CollapsibleSplitter
-from glavnaqt.ui.new_widget_adjustment import WidgetAdjuster
 from glavnaqt.ui.panel import EXPANDING_EXPANDING, FIXED_EXPANDING
+from glavnaqt.ui.widget_adjustment import WidgetAdjuster
 from .helpers import apply_font
 from .panel import PanelLabel, EXPANDING_FIXED
-
-logger = logging.getLogger(__name__)
 
 
 class LayoutManager:
@@ -23,7 +22,14 @@ class LayoutManager:
         self.last_resize_log_time = time.time()
         self.resize_log_threshold = 0.5
         self.last_config = None
-        self.widget_adjuster = None
+        self.current_config = None
+        self._widget_adjuster = None
+
+    @property
+    def widget_adjuster(self):
+        if not self._widget_adjuster:
+            self._widget_adjuster = WidgetAdjuster()
+        return self._widget_adjuster
 
     def create_widget(self):
         """Create a default widget if none is supplied."""
@@ -62,11 +68,9 @@ class LayoutManager:
 
     def build_layout(self, config):
         self.clear_layout()
-        # temp_window = QMainWindow()
-        if not self.current_widgets.get("vertical_splitter"):
+        if self.current_widgets.get("vertical_splitter") is None:
             self.current_widgets.update(
                 {"vertical_splitter": QSplitter(Qt.Orientation.Vertical, objectName="vertical_splitter")})
-        # temp_window.setCentralWidget(self.current_widgets["vertical_splitter"])
         main_content_splitter = self.create_main_content_splitter(config)
         if "top" in config.collapsible_sections:
             if "top_splitter" not in self.current_widgets:
@@ -75,6 +79,7 @@ class LayoutManager:
                                                           config.splitter_handle_width, config, "top")})
             if config.collapsible_sections.get("top", {}).get("widget"):
                 self.current_widgets["top_widget"] = config.collapsible_sections["top"]["widget"]
+                del config.collapsible_sections["top"]["widget"]
             elif "top_widget" not in self.current_widgets:
                 self.current_widgets["top_widget"] = self.create_top_bar(config)
             self.current_widgets["top_splitter"].addWidget(self.current_widgets["top_widget"])
@@ -90,15 +95,21 @@ class LayoutManager:
                                                              config.splitter_handle_width, config, "bottom")})
             if config.collapsible_sections.get("bottom", {}).get("widget"):
                 self.current_widgets.update({"bottom_widget": config.collapsible_sections["bottom"]["widget"]})
+                del config.collapsible_sections["bottom"]["widget"]
+                if config.collapsible_sections.get("bottom", {}).get("status_label"):
+                    self.current_widgets.update({"status_label": config.collapsible_sections["bottom"]["status_label"]})
+                    del config.collapsible_sections["bottom"]["status_label"]
             elif "bottom_widget" not in self.current_widgets:
                 self.current_widgets.update({"bottom_widget": self.create_status_bar(config)})
-
+            elif "status_label" in self.current_widgets and self.current_widgets["status_label"].parent() != self.current_widgets["bottom_widget"]:
+                self.current_widgets["bottom_widget"].addPermanentWidget(self.current_widgets["status_label"], 1)
             self.current_widgets["bottom_splitter"].addWidget(self.current_widgets["vertical_splitter"])
             self.current_widgets["bottom_splitter"].addWidget(self.current_widgets["bottom_widget"])
             self.current_widgets.update({"central_widget": "bottom_splitter"})
         else:
             self.current_widgets.update({"central_widget": "vertical_splitter"})
-        self.last_config = config
+        self.last_config = self.current_config
+        self.current_config = config
         QTimer.singleShot(25, lambda: self.initialize_geometries())
 
     def initialize_geometries(self):
@@ -117,41 +128,16 @@ class LayoutManager:
                 logger.debug(f"Initial {widget_name} height: {dims['h']}px")
 
         if not self.is_initialized:
-            self.widget_adjuster = WidgetAdjuster()
-            self.adjust_layout(self.last_config.window_size[0], self.last_config.font_face, self.last_config.font_size)
+            self.adjust_layout(self.current_config.window_size[0], self.current_config.font_face,
+                               self.current_config.font_size)
             self.is_initialized = True
-
-    #        self.is_initialized = True
-    #    def initialize_geometries(self, window_size):
-    #        #self.get_central_widget().resize(*window_size)
-    #        if "main_content_widget" in self.current_widgets and not self.initial_main_content_width:
-    #            self.initial_main_content_width = self.current_widgets["main_content_widget"].width()
-    #            logger.debug(f"Initial main content width: {self.initial_main_content_width}px")
-    #
-    #        if "left_widget" in self.current_widgets and not self.initial_left_sidebar_width:
-    #            self.initial_left_sidebar_width = self.current_widgets["left_widget"].width()
-    #            logger.debug(f"Initial left sidebar width: {self.initial_left_sidebar_width}px")
-    #
-    #        if "right_widget" in self.current_widgets and not self.initial_right_sidebar_width:
-    #            self.initial_right_sidebar_width = self.current_widgets["right_widget"].width()
-    #            logger.debug(f"Initial right sidebar width: {self.initial_right_sidebar_width}px")
-    #
-    #        if "top_widget" in self.current_widgets and not self.initial_top_bar_height:
-    #            self.initial_top_bar_height = self.current_widgets["top_widget"].height()
-    #            logger.debug(f"Initial top bar height: {self.initial_top_bar_height}px")
-    #
-    #        if "bottom_widget" in self.current_widgets and not self.initial_status_bar_height:
-    #            self.initial_status_bar_height = self.current_widgets["bottom_widget"].height()
-    #            logger.debug(f"Initial bottom bar height: {self.initial_status_bar_height}px")
-    #
-    #        self.is_initialized = True
 
     def create_splitter(self, orientation, name, handle_width, config, identifier="default"):
         logger.debug(f'Creating collapsible splitter for {identifier}')
         splitter = CollapsibleSplitter(orientation, identifier=identifier,
                                        handle_width=handle_width)
         splitter.setObjectName(name)
-        splitter.setContentsMargins(0, 0, 0, 0)  # Ensure no marginsa
+        splitter.setContentsMargins(0, 0, 0, 0)
         splitter.splitterMoved.connect(
             lambda pos, index: self.handle_splitter_movement(splitter, pos, index, config.window_size[0],
                                                              config.font_face,
@@ -195,11 +181,12 @@ class LayoutManager:
         return right_sidebar_widget
 
     def create_main_content_splitter(self, config):
-        if not self.current_widgets.get("horizontal_splitter"):
+        if self.current_widgets.get("horizontal_splitter") is None:
             self.current_widgets.update(
                 {"horizontal_splitter": QSplitter(Qt.Orientation.Horizontal, objectName="horizontal_splitter")})
         if config.collapsible_sections.get("main_content").get("widget"):
             self.current_widgets.update({"main_content_widget": config.collapsible_sections["main_content"]["widget"]})
+            del config.collapsible_sections["main_content"]["widget"]
         elif not self.current_widgets.get("main_content_widget"):
             self.current_widgets.update({"main_content_widget": self.create_main_content(config)})
 
@@ -210,6 +197,7 @@ class LayoutManager:
                                                            config.splitter_handle_width, config, "left")})
             if config.collapsible_sections.get("left", {}).get("widget"):
                 self.current_widgets.update({"left_widget": config.collapsible_sections["left"]["widget"]})
+                del config.collapsible_sections["left"]["widget"]
             elif "left_widget" not in self.current_widgets:
                 self.current_widgets.update({"left_widget": self.create_left_sidebar(config)})
             self.current_widgets["left_splitter"].addWidget(self.current_widgets["left_widget"])
@@ -225,6 +213,7 @@ class LayoutManager:
                                                             config.splitter_handle_width, config, "right")})
             if config.collapsible_sections.get("right", {}).get("widget"):
                 self.current_widgets.update({"right_widget": config.collapsible_sections["right"]["widget"]})
+                del config.collapsible_sections["right"]["widget"]
             elif "right_widget" not in self.current_widgets:
                 self.current_widgets.update({"right_widget": self.create_right_sidebar(config)})
             self.current_widgets["right_splitter"].addWidget(self.current_widgets["horizontal_splitter"])
@@ -254,14 +243,14 @@ class LayoutManager:
 
     def adjust_layout(self, original_window_width=None, font_face=None, font_size=None, current_window_size=None):
         if not original_window_width:
-            original_window_width = self.last_config.window_size[0]
+            original_window_width = self.current_config.window_size[0]
         if current_window_size:
             self.get_central_widget().resize(*current_window_size)
 
         if not font_face:
-            font_face = self.last_config.font_face
+            font_face = self.current_config.font_face
         if not font_size:
-            font_size = self.last_config.font_size
+            font_size = self.current_config.font_size
 
         if not self.current_widgets.get("main_content_widget"):
             logger.error("main_content_widget is not initialized. Layout adjustment cannot proceed.")
@@ -271,8 +260,8 @@ class LayoutManager:
         except Exception as e:
             logging.error(f"Exception occurred during layout adjustment: {e}", exc_info=True)
 
-        if self.current_widgets.get("central_widget"):
-            log_widget_hierarchy(self.get_central_widget())
+        #if self.current_widgets.get("central_widget"):
+        #    log_widget_hierarchy(self.get_central_widget())
 
 
 class LayoutManagerFactory:

@@ -1,13 +1,11 @@
-import logging
 import time
 
 from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import QStatusBar
 
+from glavnaqt.core import logger
 from glavnaqt.ui.font_scaling import calculate_scaling_factor
 from glavnaqt.ui.helpers import apply_font
-
-logger = logging.getLogger(__name__)
 
 
 class WidgetAdjuster:
@@ -31,13 +29,13 @@ class WidgetAdjuster:
                                                                              current_window_width,
                                                                              log_required)
 
-        if "top" in layout_manager.last_config.collapsible_sections:
+        if "top" in layout_manager.current_config.collapsible_sections:
             top_bar_font_size = self._adjust_bar_height("top", log_required, font_face, font_size)
-        if "bottom" in layout_manager.last_config.collapsible_sections:
+        if "bottom" in layout_manager.current_config.collapsible_sections:
             status_bar_font_size = self._adjust_bar_height("bottom", log_required, font_face, font_size)
-        if "left" in layout_manager.last_config.collapsible_sections:
+        if "left" in layout_manager.current_config.collapsible_sections:
             left_sidebar_font_size = self._adjust_sidebar_width("left", log_required, font_face, font_size)
-        if "right" in layout_manager.last_config.collapsible_sections:
+        if "right" in layout_manager.current_config.collapsible_sections:
             right_sidebar_font_size = self._adjust_sidebar_width("right", log_required, font_face, font_size)
 
         # Apply similar logic to the main content panel
@@ -79,13 +77,13 @@ class WidgetAdjuster:
 
     def _adjust_bar_height(self, section_name, log_required=False, font_face=None, max_font_size=None):
         new_font_size = None
-        bar = self.layout_manager.current_widgets["top_widget"]
-        status_bar = None
+        bar = self.layout_manager.current_widgets[f"{section_name}_widget"]
         status_label = None
+        status_bar = None
         padding_factor = 0.2
         if isinstance(bar, QStatusBar):  # Handling when StatusBarManager is used
-            status_bar = self.layout_manager.current_widgets["bottom_widget"]
-            status_label = self.layout_manager.current_widgets["bottom_widget"].widgets(0)
+            status_bar = bar
+            status_label = self.layout_manager.current_widgets["status_label"]
             bar = status_label
             padding_factor = 0.4
         if bar is None:
@@ -99,7 +97,7 @@ class WidgetAdjuster:
             logger.debug(f"[{section_name}] Text height: {text_height}px")
 
         # Adjust widget height based on text height and dynamic padding
-        self._adjust_widget_dimension(bar if not status_bar else status_bar, text_height, padding_factor=padding_factor,
+        self._adjust_widget_dimension(status_bar or bar, text_height, padding_factor=padding_factor,
                                       is_width=False,
                                       log_required=log_required)
         if status_bar:
@@ -108,8 +106,6 @@ class WidgetAdjuster:
         if max_font_size:
             new_font_size = self._calculate_new_font_size(section_name, bar, text_height, font_face, max_font_size,
                                                           log_required)
-        # Adjust the splitter handle width for consistency
-        self._adjust_splitter_handle_width(section_name, log_required)
         if new_font_size:
             return new_font_size
 
@@ -137,16 +133,12 @@ class WidgetAdjuster:
         new_sidebar_width = int(initial_width * self.scaling_factor)
         new_sidebar_width = min(new_sidebar_width, initial_width)
 
-        if new_sidebar_width == initial_width:
-            return None
-
         if log_required:
             logger.debug(f"[{section_name}] New sidebar width after scaling: {new_sidebar_width}px")
 
-        self._adjust_widget_dimension(sidebar, new_sidebar_width, padding_factor=0.1, is_width=True,
-                                      log_required=log_required)
-
-        self._adjust_splitter_handle_width(section_name, log_required)
+        if new_sidebar_width != initial_width:
+            self._adjust_widget_dimension(sidebar, new_sidebar_width, padding_factor=0.1, is_width=True,
+                                          log_required=log_required)
 
         new_font_size = calculate_scaling_factor(new_sidebar_width, sidebar.text(), new_sidebar_width, font_face,
                                                  font_size,
@@ -172,8 +164,6 @@ class WidgetAdjuster:
                                                 main_content_widget.width(), font_face, font_size,
                                                 log_required=log_required)
             else:
-                logger.debug(
-                    f"[main_content] Widget {type(main_content_widget).__name__} does not have a text attribute.")
                 # Skip font adjustment for non-text widgets
                 return None
         except RuntimeError as e:
@@ -192,22 +182,13 @@ class WidgetAdjuster:
             if section_name in ("bottom", "top"):
                 self._adjust_bar_height(section_name, log_required)
 
-    def _adjust_splitter_handle_width(self, section_name, log_required):
-        splitter = self.layout_manager.current_widgets.get(f'{section_name}_splitter')
-        if splitter:
-            new_handle_width = max(min(int(self.layout_manager.last_config.splitter_handle_width * self.scaling_factor),
-                                       self.layout_manager.last_config.splitter_handle_width), 1)
-            splitter.setHandleWidth(new_handle_width)
-            if log_required:
-                logger.debug(f"[{section_name}] Scaled splitter handle width: {new_handle_width}px")
-
     def _apply_smallest_font_size(self, font_sizes, log_required):
         smallest_font_size = min(filter(None, font_sizes)) if any(
-            font_sizes) else self.layout_manager.last_config.font_size
+            font_sizes) else self.layout_manager.current_config.font_size
 
         for section_name in ["top", "bottom", "left", "right", "main_content"]:
             widget = self.layout_manager.current_widgets.get(f'{section_name}_widget')
             if isinstance(widget, QStatusBar):
-                widget = self.layout_manager.current_widgets["bottom_widget"].widgets(0)
+                widget = self.layout_manager.current_widgets.get("status_label")
             if widget:
                 self._apply_font_size_to_widget(widget, smallest_font_size, log_required, section_name)

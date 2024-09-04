@@ -1,13 +1,11 @@
-# glavnaqt/ui/status_bar_manager.py
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QFrame
-import logging
+
 from glavnaqt.core import config
 from glavnaqt.core.event_bus import create_or_get_shared_event_bus
 from glavnaqt.ui.panel import EXPANDING_FIXED, EXPANDING_EXPANDING
 
-logger = logging.getLogger(__name__)
 
 class StatusBarUpdateWorker(QThread):
     status_updated = pyqtSignal(str, str)  # Signal to emit updated status text and tooltip
@@ -21,6 +19,7 @@ class StatusBarUpdateWorker(QThread):
         status_text = self.kwargs.get('text', 'Default Status Text')
         tooltip_text = status_text
         self.status_updated.emit(status_text, tooltip_text)
+
 
 class StatusBarManager:
     def __init__(self, event_bus=None):
@@ -49,7 +48,7 @@ class StatusBarManager:
         self.status_label.setSizePolicy(*EXPANDING_EXPANDING)
         self.status_bar.setSizeGripEnabled(False)
         self.status_label.setToolTip(initial_text)
-        self.status_bar.addPermanentWidget(self.status_label)
+        self.status_bar.addPermanentWidget(self.status_label, 1)
         self.start_worker(text='Status Bar Initialized')
 
     def start_worker(self, *args, **kwargs):

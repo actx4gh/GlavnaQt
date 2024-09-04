@@ -1,8 +1,6 @@
-import logging
-
 from PyQt6.QtCore import QTimer
 
-logger = logging.getLogger(__name__)
+from glavnaqt.core import logger
 
 
 def perform_transition(mainWin, start_config, end_config):

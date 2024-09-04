@@ -1,6 +1,13 @@
-# config.py
+import os
+import platform
 
 from PyQt6.QtCore import Qt
+
+LOGGER_NAME = 'glavnaqt'
+LOG_FILE_NAME = f'{LOGGER_NAME}.log'
+APP_NAME = LOGGER_NAME
+PLATFORM_NAME = platform.system()
+LOG_LEVEL = "INFO"
 
 # Alignment constants for UI components
 ALIGN_CENTER = Qt.AlignmentFlag.AlignCenter
@@ -32,6 +39,24 @@ ALIGNMENT_NAMES_REVERSE_LOOKUP = {
     Qt.AlignmentFlag.AlignHorizontal_Mask: 'ALIGN_HORZ_MASK',
     Qt.AlignmentFlag.AlignVertical_Mask: 'ALIGN_VERT_MASK',
 }
+
+
+def _get_default_config_dir():
+    system = PLATFORM_NAME # Use the platform_name attribute
+
+    if system == 'Darwin':  # macOS
+        config_dir = os.path.expanduser(f"~/Library/Application Support/{APP_NAME}")
+    elif system == 'Linux' or 'CYGWIN' in system:  # Linux and Cygwin
+        config_dir = os.path.expanduser(f"~/.config/{APP_NAME}")
+    elif system == 'Windows':  # Windows
+        config_dir = os.path.join(os.getenv('LOCALAPPDATA'), APP_NAME)
+    else:
+        raise RuntimeError(f"Unsupported OS: {system}")
+    return config_dir
+
+
+CONFIG_DIR = _get_default_config_dir()
+
 
 class UIConfiguration:
     def __init__(self,
@@ -74,12 +99,15 @@ class UIConfiguration:
         """
         return self.collapsible_sections.get(section_name, {}).get("widget")
 
-    def update_collapsible_section(self, section_name, text=None, alignment=ALIGN_CENTER, widget=None):
+    def update_collapsible_section(self, section_name, text=None, alignment=ALIGN_CENTER, widget=None,
+                                   status_label=None):
         self.collapsible_sections[section_name] = {
             "text": text,
             "alignment": alignment,
-            "widget": widget
+            "widget": widget,
         }
+        if status_label:
+            self.collapsible_sections[section_name].update({"status_label": status_label})
 
     def get_section_alignment(self, section_name):
         return self.collapsible_sections.get(section_name, {}).get("alignment", ALIGN_CENTER)

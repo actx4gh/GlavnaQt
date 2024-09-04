@@ -1,9 +1,7 @@
-import logging
-
+from glavnaqt.core import logger
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QSplitter, QLabel
 
-logger = logging.getLogger(__name__)
 
 
 def log_widget_hierarchy(widget, level=0, visited=None, visual_mapping=True):

@@ -1,23 +1,16 @@
 # Ensure that the parent directory of 'core' is in sys.path
-import os
-import sys
-
+import os, sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import argparse
-import logging
-
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication
+from glavnaqt.core import logger
 from glavnaqt.core import config
 from glavnaqt.core.config_manager import all_configurations
 from glavnaqt.core.config import UIConfiguration
 from glavnaqt.ui.main_window import MainWindow
 from glavnaqt.ui.status_bar_manager import StatusBarManager
 from glavnaqt.ui.transitions import perform_transition
-
-# Set up logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
 
 def schedule_transition(mainWin, config_i, config_j, delay):
     """Schedules a transition between two configurations with a delay."""
@@ -83,10 +76,8 @@ def convert_to_dict_config(config_list):
 
     return filtered_sections
 
-
-if __name__ == '__main__':
-
-    logging.debug('Starting application')
+def main():
+    logger.debug('Starting application')
 
     # Argument parser to toggle cycling through configurations
     parser = argparse.ArgumentParser(description="Demo application for cycling through UI configurations.")
@@ -102,7 +93,7 @@ if __name__ == '__main__':
     config.config.splitter_handle_width = 5
     config.config.window_size = (800, 600)
     config.config.window_position = (150, 150)
-    config.config.enable_status_bar_manager = False
+    config.config.enable_status_bar_manager = True
     config.config.update_collapsible_section('main_content', 'Main Content', config.ALIGN_CENTER)
     config.config.update_collapsible_section('top', 'Top Bar', config.ALIGN_CENTER)
     config.config.update_collapsible_section('bottom', 'Status Bar', config.ALIGN_CENTER)
@@ -122,3 +113,8 @@ if __name__ == '__main__':
                                                    dict_configurations))  # Start cycling configs after the main window shows up
 
     sys.exit(app.exec())
+
+
+if __name__ == '__main__':
+    main()
+

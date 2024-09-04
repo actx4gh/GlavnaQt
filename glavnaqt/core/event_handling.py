@@ -1,7 +1,7 @@
-import logging
 from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 
-logger = logging.getLogger(__name__)
+from glavnaqt.core import logger
+
 
 class ResizeSignal(QObject):
     """

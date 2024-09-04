@@ -1,9 +1,5 @@
-import logging
-
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QLabel
-
-logger = logging.getLogger(__name__)
 
 
 def get_qlabel(ui_instance, name):

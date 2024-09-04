@@ -1,7 +1,7 @@
-import logging
 from PyQt6.QtGui import QFontMetrics, QFont
 
-logger = logging.getLogger(__name__)
+from glavnaqt.core import logger
+
 
 def calculate_scaling_factor(parent_width, actual_text, initial_text_width, font_face, max_font_size, min_font_size=3,
                              log_required=False):

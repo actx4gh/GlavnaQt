@@ -1,5 +1,6 @@
 import logging
 import time
+from copy import deepcopy
 
 from PyQt6.QtCore import QTimer, QEventLoop
 from PyQt6.QtWidgets import QMainWindow, QStatusBar, QLabel
@@ -40,8 +41,11 @@ class MainWindow(QMainWindow):
         self.central_widget = None
         self.status_bar = None
         self.status_label = None
+        self.last_layout_sections = None
         self.setWindowTitle("MainWindow")
-        self.setGeometry(*self.ui_config.window_position, *self.ui_config.window_size)
+        self.initial_window_size = self.ui_config.window_size
+        self.initial_window_position = self.ui_config.window_position
+        self.setGeometry(*self.initial_window_position, *self.initial_window_size)
         self._initialize_status_bar()
         self.resize_emission_args = {'event_type': 'status_update'}
         self.setMinimumSize(100, 100)
@@ -53,7 +57,7 @@ class MainWindow(QMainWindow):
             self.status_bar = QStatusBar(self)
             self.status_label = QLabel(parent=self.status_bar)
             self.event_bus.emit('initialize_status_bar', self.status_bar, self.status_label)
-            self.ui_config.update_collapsible_section('bottom', widget=self.status_bar)
+            self.ui_config.update_collapsible_section('bottom', widget=self.status_bar, status_label=self.status_label)
 
     def update_ui(self, config):
         """
@@ -105,13 +109,10 @@ class MainWindow(QMainWindow):
     def toggle_fullscreen_layout(self):
         """Toggle between full-screen and original layout."""
         if self.is_fullscreen:
-            # Switch to saved configuration
-            self.update_ui(self.layout_manager.saved_layout)
+            self.update_ui(self.layout_manager.last_config)
         else:
-            # Save current layout before switching to full-screen
-            self.layout_manager.save_current_layout()
-            # Switch to full-screen configuration with only the main content
-            self.update_ui({'main_content': self.saved_layout['main_content']})
-
+            config  = deepcopy(self.layout_manager.current_config)
+            config.collapsible_sections = {'main_content': {"alignment": self.ui_config.collapsible_sections["main_content"]["alignment"]}}
+            self.update_ui(config)
         self.is_fullscreen = not self.is_fullscreen
         logger.debug(f"UI toggled to {'fullscreen' if self.is_fullscreen else 'original'} layout.")
