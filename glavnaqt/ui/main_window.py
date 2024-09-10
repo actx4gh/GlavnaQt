@@ -69,6 +69,7 @@ class MainWindow(QMainWindow):
         self._initialize_status_bar()
         self.layout_manager.update_layout(config, current_window_size=(self.width(), self.height()))
         self.setCentralWidget(self.layout_manager.get_central_widget())
+        self.centralWidget().updateGeometry()
 
     def on_resize_timeout(self):
         """
