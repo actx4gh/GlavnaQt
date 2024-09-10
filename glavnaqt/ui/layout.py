@@ -5,11 +5,9 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QSplitter, QWidget, QVBoxLayout
 
 from glavnaqt.core import logger
-from glavnaqt.core.logging_utils import log_widget_hierarchy
 from glavnaqt.ui.collapsible_splitter import CollapsibleSplitter
 from glavnaqt.ui.panel import EXPANDING_EXPANDING, FIXED_EXPANDING
 from glavnaqt.ui.widget_adjustment import WidgetAdjuster
-from glavnaqt.ui.busy_indicator import BusyIndicator
 from .helpers import apply_font
 from .panel import PanelLabel, EXPANDING_FIXED
 
