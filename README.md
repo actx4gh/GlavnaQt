@@ -1,161 +1,47 @@
+GlavnaQt: A Basic UI Framework for PyQt6 Applications
+=====================================================
 
-# GlavnaQt
+**GlavnaQt** is a framework for building PyQt6 desktop applications with a focus on structured layout management, event handling, and status bar control. It provides essential building blocks for managing user interfaces in desktop applications.
 
-**GlavnaQt** is a Qt-based GUI library written in Python using PyQt6. It provides a customizable and dynamic user interface framework that simplifies the development of desktop applications. The library includes features such as collapsible panels, adjustable fonts, scalable widgets, and an integrated status bar manager, making it a versatile choice for building modern desktop applications.
+Key Components
+--------------
 
-## Features
+### Layout Management:
 
-- **Collapsible Splitters**: Easily create and manage splitters that can be collapsed or expanded based on user interaction.
-- **Dynamic Font Scaling**: Automatically adjusts the font sizes of labels and widgets based on the window size or specific dimensions.
-- **Customizable Status Bar**: Manage and update a status bar with custom messages and tooltips.
-- **Panel Labels**: Create labeled panels with custom styling and size policies.
-- **Widget Adjustment**: Dynamically adjusts the width, height, and font sizes of widgets to ensure a consistent and responsive UI layout.
-- **Transitions**: Perform UI transitions between different configurations with a delay, allowing for smooth changes in the interface.
+The `LayoutManager` is used to organize UI sections such as top bars, sidebars, and main content panels. This manager supports vertical and horizontal splitters to divide the screen into multiple areas. It offers a straightforward way to structure an application's layout.
 
-## Installation
+### Status Bar Management:
 
-### Prerequisites
+The `StatusBarManager` offers a simple solution for managing a status bar, including a status label and a basic progress indicator. It's designed to cover most use cases where a status bar is needed, though it focuses on simple configurations.
 
-- Python 3.7+
-- PyQt6
+### Event Handling:
 
-### Installation Steps
+An event bus is included to manage communication between components. Events such as status updates or UI transitions can be broadcast across components. The event system enables decoupling, making it easier to manage application-wide events.
 
-1. **Clone the Repository**
+### UI Transitions:
 
-   ```bash
-   git clone https://github.com/actx4gh/GlavnaQt.git
-   cd GlavnaQt
-   ```
+The `perform_transition` method enables transitions between different UI configurations. This is useful for switching between layouts or different states in an application.
 
-2. **Install Dependencies**
+Limitations
+-----------
 
-   You can install the required dependencies using `pip`:
+### Limited Flexibility:
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+GlavnaQt is well-suited for applications with simple, predefined layouts. For applications that require more dynamic or highly interactive interfaces, customization options may be limited.
 
-3. **Run the Example**
+### Basic Configuration System:
 
-   To see GlavnaQt in action, you can run the provided example script:
+The configuration system allows for defining fonts, window sizes, and section alignments, but does not support advanced interaction models or highly customizable layouts.
 
-   ```bash
-   python example.py
-   ```
+### Status Bar Constraints:
 
-## Usage
+The status bar management focuses on basic status label updates and a busy indicator. More advanced features, like multi-part status bars, are not included out of the box but can be extended with custom implementations.
 
-### Creating a Main Window with Collapsible Splitters
+Basic Usage
+-----------
 
-The core of GlavnaQt revolves around creating a `MainWindow` that manages collapsible splitters and customizable panels.
+### Setting Up the Main Window:
 
-```python
-from PyQt6.QtWidgets import QApplication
-from ui.main_window import MainWindow
-from core.config import UIConfiguration
+Use the `MainWindow` class to initialize the main window for your application. This will serve as the base for all UI components.
 
-app = QApplication([])
-
-# Define your UI configuration
-ui_config = UIConfiguration(
-    font_face="Helvetica",
-    font_size=13,
-    splitter_handle_width=5,
-    window_size=(800, 600),
-    window_position=(100, 100),
-    enable_status_bar_manager=True,
-    collapsible_sections={
-        'top': {'text': 'Top Bar', 'alignment': UIConfiguration.ALIGN_CENTER},
-        'bottom': {'text': 'Status Bar', 'alignment': UIConfiguration.ALIGN_CENTER},
-        'left': {'text': 'Left Sidebar', 'alignment': UIConfiguration.ALIGN_CENTER},
-        'right': {'text': 'Right Sidebar', 'alignment': UIConfiguration.ALIGN_CENTER},
-        'main_content': {'text': 'Main Content', 'alignment': UIConfiguration.ALIGN_CENTER},
-    }
-)
-
-# Create and show the main window
-main_window = MainWindow(ui_config)
-main_window.show()
-
-app.exec()
-```
-
-### Customizing Panels
-
-You can create custom panels by using the `PanelLabel` class, which allows you to define size policies, fonts, and alignment.
-
-```python
-from ui.panel import PanelLabel, EXPANDING_FIXED
-from PyQt6.QtCore import Qt
-
-# Example of creating a custom panel
-custom_panel = PanelLabel(
-    text="Custom Panel",
-    name="custom_panel",
-    size_policy=EXPANDING_FIXED,
-    font_name="Arial",
-    font_size=14,
-    alignment=Qt.AlignmentFlag.AlignCenter,
-    frame_shape=QFrame.Shape.Box
-)
-```
-
-### Managing the Status Bar
-
-The `StatusBarManager` class provides an easy way to update and manage the status bar of your application.
-
-```python
-from ui.status_bar_manager import StatusBarManager
-
-# Assuming 'main_window' is an instance of MainWindow
-status_manager = StatusBarManager(main_window)
-
-# Update the status bar text
-status_manager.update_status_bar("Application Loaded Successfully")
-```
-
-### Performing UI Transitions
-
-Transitions between different UI states can be performed using the `perform_transition` function.
-
-```python
-from ui.transitions import perform_transition
-from core.config import UIConfiguration
-
-# Define start and end configurations
-start_config = UIConfiguration(
-    font_face="Helvetica",
-    font_size=13,
-    window_size=(800, 600)
-)
-end_config = UIConfiguration(
-    font_face="Arial",
-    font_size=16,
-    window_size=(1024, 768)
-)
-
-# Perform the transition
-perform_transition(main_window, start_config, end_config)
-```
-
-## Contributing
-
-Contributions to GlavnaQt are welcome! If you find a bug or have a feature request, please open an issue on GitHub. If you'd like to contribute code, please fork the repository and submit a pull request.
-
-### Steps to Contribute
-
-1. Fork the repository.
-2. Create a new branch for your feature or bugfix.
-3. Commit your changes with clear and descriptive messages.
-4. Push your changes to your fork.
-5. Submit a pull request.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
-## Acknowledgements
-
-- Thanks to the developers of PyQt6 for providing a robust framework for building Python GUIs.
-- Inspired by various open-source GUI libraries that make desktop application development more accessible.
+python
