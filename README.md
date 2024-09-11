@@ -1,47 +1,51 @@
-GlavnaQt: A Basic UI Framework for PyQt6 Applications
-=====================================================
 
-**GlavnaQt** is a framework for building PyQt6 desktop applications with a focus on structured layout management, event handling, and status bar control. It provides essential building blocks for managing user interfaces in desktop applications.
+# Project Title
 
-Key Components
---------------
+This project is a PyQt6-based graphical user interface (GUI) application, which includes a modular layout management system, status bar management, event-driven transitions, and customizable user interface (UI) configurations. It is designed to allow dynamic updates and transitions of the UI layout based on configuration changes.
 
-### Layout Management:
+## Features
 
-The `LayoutManager` is used to organize UI sections such as top bars, sidebars, and main content panels. This manager supports vertical and horizontal splitters to divide the screen into multiple areas. It offers a straightforward way to structure an application's layout.
+- **Event-Driven UI Transitions**: Supports smooth UI transitions between different configurations using the event bus and timer-driven actions.
+- **Dynamic Layout Management**: The layout manager dynamically handles collapsible sections like sidebars, top bars, and the main content area.
+- **Status Bar Manager**: Provides an easy-to-use interface for managing and updating a status bar, including a busy indicator.
+- **Customizable UI Configurations**: UI elements such as font face, size, and section visibility can be adjusted dynamically.
 
-### Status Bar Management:
+## Installation
 
-The `StatusBarManager` offers a simple solution for managing a status bar, including a status label and a basic progress indicator. It's designed to cover most use cases where a status bar is needed, though it focuses on simple configurations.
+1. Clone the repository:
 
-### Event Handling:
+   ```bash
+   git clone https://github.com/your-repository.git
+   cd your-repository
+   ```
 
-An event bus is included to manage communication between components. Events such as status updates or UI transitions can be broadcast across components. The event system enables decoupling, making it easier to manage application-wide events.
+2. Install the required dependencies:
 
-### UI Transitions:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-The `perform_transition` method enables transitions between different UI configurations. This is useful for switching between layouts or different states in an application.
+3. Run the application:
 
-Limitations
------------
+   ```bash
+   python example.py
+   ```
 
-### Limited Flexibility:
+## Usage
 
-GlavnaQt is well-suited for applications with simple, predefined layouts. For applications that require more dynamic or highly interactive interfaces, customization options may be limited.
+You can cycle through different UI configurations by running the application with the `--cycle-configs` argument:
 
-### Basic Configuration System:
+```bash
+python example.py --cycle-configs
+```
 
-The configuration system allows for defining fonts, window sizes, and section alignments, but does not support advanced interaction models or highly customizable layouts.
+The main window will automatically cycle through the predefined UI layouts after a set delay.
 
-### Status Bar Constraints:
+## Project Structure
 
-The status bar management focuses on basic status label updates and a busy indicator. More advanced features, like multi-part status bars, are not included out of the box but can be extended with custom implementations.
+- **`main_window.py`**: Defines the main window and handles dynamic layout updates.
+- **`layout.py`**: Manages the layout of UI components including sidebars and main content.
+- **`status_bar_manager.py`**: Controls the status bar and the busy indicator.
+- **`event_bus.py`**: Implements a simple event bus for managing UI events.
+- **`transitions.py`**: Handles smooth transitions between different UI configurations.
 
-Basic Usage
------------
-
-### Setting Up the Main Window:
-
-Use the `MainWindow` class to initialize the main window for your application. This will serve as the base for all UI components.
-
-python
