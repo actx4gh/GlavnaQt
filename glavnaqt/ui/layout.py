@@ -2,7 +2,7 @@ import logging
 import time
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QSplitter, QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QSplitter, QWidget, QVBoxLayout, QProgressBar
 
 from glavnaqt.core import logger
 from glavnaqt.ui.collapsible_splitter import CollapsibleSplitter
@@ -98,10 +98,16 @@ class LayoutManager:
                 if config.collapsible_sections.get("bottom", {}).get("status_label"):
                     self.current_widgets.update({"status_label": config.collapsible_sections["bottom"]["status_label"]})
                     del config.collapsible_sections["bottom"]["status_label"]
+                    busy_indicator = self.current_widgets["bottom_widget"].findChild(QProgressBar, "busy_indicator")
+                    if busy_indicator:
+                        self.current_widgets.update({"busy_indicator": busy_indicator})
             elif "bottom_widget" not in self.current_widgets:
                 self.current_widgets.update({"bottom_widget": self.create_status_bar(config)})
-            elif "status_label" in self.current_widgets and self.current_widgets["status_label"].parent() != self.current_widgets["bottom_widget"]:
+            elif "status_label" in self.current_widgets and self.current_widgets["status_label"].parent() != \
+                    self.current_widgets["bottom_widget"]:
                 self.current_widgets["bottom_widget"].addPermanentWidget(self.current_widgets["status_label"], 1)
+                if "busy_indicator" in self.current_widgets:
+                    self.current_widgets["bottom_widget"].addPermanentWidget(self.current_widgets["busy_indicator"], 0)
             self.current_widgets["bottom_splitter"].addWidget(self.current_widgets["vertical_splitter"])
             self.current_widgets["bottom_splitter"].addWidget(self.current_widgets["bottom_widget"])
             self.current_widgets.update({"central_widget": "bottom_splitter"})
@@ -259,7 +265,7 @@ class LayoutManager:
         except Exception as e:
             logging.error(f"Exception occurred during layout adjustment: {e}", exc_info=True)
 
-        #if self.current_widgets.get("central_widget"):
+        # if self.current_widgets.get("central_widget"):
         #    log_widget_hierarchy(self.get_central_widget())
 
 
