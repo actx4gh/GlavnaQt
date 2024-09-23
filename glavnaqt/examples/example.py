@@ -1,5 +1,7 @@
 # Ensure that the parent directory of 'core' is in sys.path
-import os, sys
+import os
+import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import argparse
 from PyQt6.QtCore import QTimer
@@ -8,16 +10,18 @@ from glavnaqt.core import logger
 from glavnaqt.core import config
 from glavnaqt.core.config_manager import all_configurations
 from glavnaqt.core.config import UIConfiguration
+from glavnaqt.core.thread_manager import ThreadManager
 from glavnaqt.ui.main_window import MainWindow
 from glavnaqt.ui.status_bar_manager import StatusBarManager
 from glavnaqt.ui.transitions import perform_transition
 
-def schedule_transition(mainWin, config_i, config_j, delay):
+
+def schedule_transition(main_window, config_i, config_j, delay):
     """Schedules a transition between two configurations with a delay."""
-    QTimer.singleShot(delay, lambda: perform_transition(mainWin, config_i, config_j))
+    QTimer.singleShot(delay, lambda: perform_transition(main_window, config_i, config_j))
 
 
-def cycle_configs(mainWin, configurations):
+def cycle_configs(main_window, configurations):
     """Cycles through all configurations to apply them to the main window."""
     total_configs = len(configurations)
     transition_time = 10000  # 10 seconds total for each transition
@@ -49,11 +53,11 @@ def cycle_configs(mainWin, configurations):
                     collapsible_sections=convert_to_dict_config(configurations[j])
                 )
 
-                schedule_transition(mainWin, ui_config_i, ui_config_j, index * transition_time)
+                schedule_transition(main_window, ui_config_i, ui_config_j, index * transition_time)
                 index += 1
-                #if index >= 1:
-                    #cyclequit = True
-                    # break
+                # if index >= 1:
+                # cyclequit = True
+                # break
 
 
 def convert_to_dict_config(config_list):
@@ -73,8 +77,8 @@ def convert_to_dict_config(config_list):
     # Always include "main_content"
     filtered_sections["main_content"] = default_config["main_content"]
 
-
     return filtered_sections
+
 
 def main():
     logger.debug('Starting application')
@@ -101,15 +105,17 @@ def main():
     config.config.update_collapsible_section('right', 'Right Sidebar', config.ALIGN_CENTER)
 
     # Create and show the main window
-    status_bar_manager = StatusBarManager()
-    mainWin = MainWindow()
-    mainWin.show()
+    thread_manager = ThreadManager()
+    #_ = StatusBarManager()
+    _ = StatusBarManager(thread_manager=thread_manager)
+    main_window = MainWindow()
+    main_window.show()
 
     if args.cycle_configs:
         # If --cycle-configs is provided, cycle through all configurations
         configurations = all_configurations()
         dict_configurations = [convert_to_dict_config(config) for config in configurations]
-        QTimer.singleShot(0, lambda: cycle_configs(mainWin,
+        QTimer.singleShot(0, lambda: cycle_configs(main_window,
                                                    dict_configurations))  # Start cycling configs after the main window shows up
 
     sys.exit(app.exec())
@@ -117,4 +123,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

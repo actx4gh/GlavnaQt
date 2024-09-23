@@ -2,7 +2,7 @@ import logging
 import time
 from copy import deepcopy
 
-from PyQt6.QtCore import QTimer, QEventLoop
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QMainWindow, QStatusBar, QLabel
 
 from glavnaqt.core import config
@@ -88,7 +88,8 @@ class MainWindow(QMainWindow):
             return
         self.is_resizing = True
         current_time = time.time()
-        if not self.layout_manager.is_initialized or (current_time - self.last_resize_log_time > self.resize_log_threshold):
+        if not self.layout_manager.is_initialized or (
+                current_time - self.last_resize_log_time > self.resize_log_threshold):
             logger.debug(f"Resize event handled, new size: {self.size()}")
 
         self.suppress_logging = True
@@ -112,8 +113,9 @@ class MainWindow(QMainWindow):
         if self.is_fullscreen:
             self.update_ui(self.layout_manager.last_config)
         else:
-            config  = deepcopy(self.layout_manager.current_config)
-            config.collapsible_sections = {'main_content': {"alignment": self.ui_config.collapsible_sections["main_content"]["alignment"]}}
-            self.update_ui(config)
+            _config = deepcopy(self.layout_manager.current_config)
+            _config.collapsible_sections = {
+                'main_content': {"alignment": self.ui_config.collapsible_sections["main_content"]["alignment"]}}
+            self.update_ui(_config)
         self.is_fullscreen = not self.is_fullscreen
         logger.debug(f"UI toggled to {'fullscreen' if self.is_fullscreen else 'original'} layout.")

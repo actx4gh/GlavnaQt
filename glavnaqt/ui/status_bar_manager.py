@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QObject, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QFrame, QProgressBar, QSizePolicy
 
@@ -6,30 +6,24 @@ from glavnaqt.core import config
 from glavnaqt.core.event_bus import create_or_get_shared_event_bus
 
 
-class StatusBarUpdateWorker(QThread):
+class StatusBarManager(QObject):
     status_updated = pyqtSignal(str, str)  # Signal to emit updated status text and tooltip
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, thread_manager, event_bus=None):
         super().__init__()
-        self.args = args
-        self.kwargs = kwargs
-
-    def run(self):
-        status_text = self.kwargs.get('text', 'Default Status Text')
-        tooltip_text = status_text
-        self.status_updated.emit(status_text, tooltip_text)
-
-
-class StatusBarManager:
-    def __init__(self, event_bus=None):
+        self.thread_manager = thread_manager
         self.event_bus = event_bus or create_or_get_shared_event_bus()
         self.status_bar = None
         self.status_label = None
         self.busy_indicator = None  # Busy indicator using QProgressBar
-        self.worker = None
         self.event_bus.subscribe('initialize_status_bar', self.initialize_status_bar)
-        self.event_bus.subscribe('status_update', self.update_status_bar)
+        self.event_bus.subscribe('status_update', self.update_status_bar_event)
         self.event_bus.subscribe('clear_status_bar', self.clear_status_bar)
+        self.event_bus.subscribe('show_busy', self.start_busy_indicator)
+        self.event_bus.subscribe('hide_busy', self.stop_busy_indicator)
+
+        # Connect the signal to the slot
+        self.status_updated.connect(self.update_status_bar)
 
     def initialize_status_bar(self, status_bar, status_label, initial_text="Status Bar Initialized"):
         self.status_bar = status_bar
@@ -63,28 +57,62 @@ class StatusBarManager:
         self.busy_indicator.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
 
         self.status_bar.addPermanentWidget(self.busy_indicator, 0)  # Set stretch factor to 0 (fixed size)
-        self.start_worker(text='Status Bar Initialized')
+        self.start_worker(text=initial_text)
 
     def start_busy_indicator(self):
-        if self.busy_indicator:
+        if self.busy_indicator and self.status_bar.isVisible():
             self.busy_indicator.setVisible(True)
 
     def stop_busy_indicator(self):
-        if self.busy_indicator:
+        if self.busy_indicator and self.status_bar.isVisible():
             self.busy_indicator.setVisible(False)
 
     def start_worker(self, *args, **kwargs):
-        # Start the worker thread to perform the status update in the background
-        self.worker = StatusBarUpdateWorker(*args, **kwargs)
-        self.worker.status_updated.connect(self.update_status_bar)
-        self.worker.start()
+        """
+        Start a background task using the ThreadManager.
 
-    def update_status_bar(self, text=None):
+        :param args: Arguments to pass to the background task.
+        :param kwargs: Keyword arguments to pass to the background task.
+        """
+        self.thread_manager.submit_task(self._process_status_update, *args, **kwargs)
+
+    def _process_status_update(self, *args, **kwargs):
+        """
+        Background task that processes the status update.
+
+        :param args: Arguments passed from start_worker.
+        :param kwargs: Keyword arguments passed from start_worker.
+        """
+        status_text = kwargs.get('text', 'Default Status Text')
+        tooltip_text = status_text
+
+        # Emit the signal to update the GUI in the main thread
+        self.status_updated.emit(status_text, tooltip_text)
+
+    def update_status_bar(self, text=None, tooltip=None):
+        """
+        Slot to update the status bar GUI elements in the main thread.
+
+        :param text: The text to display in the status bar.
+        :param tooltip: The tooltip text for the status bar.
+        """
+        if self.status_label:
+            self.status_label.setText(text or '')
+            self.status_label.setToolTip(tooltip or text or '')
+
+    def update_status_bar_event(self, text=None):
+        """
+        Event handler for 'status_update' events from the event bus.
+
+        :param text: The text to display in the status bar.
+        """
         if text is not None:
-            self.status_label.setText(text)
-            self.status_label.setToolTip(text)
+            self.start_worker(text=text)
 
     def clear_status_bar(self):
+        """
+        Clear and delete the status bar and its components.
+        """
         if self.status_bar:
             self.status_bar.deleteLater()  # Schedule deletion of the status bar
             self.status_bar = None  # Clear the reference
