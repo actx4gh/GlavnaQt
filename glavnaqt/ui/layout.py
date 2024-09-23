@@ -1,4 +1,3 @@
-import logging
 import time
 
 from PyQt6.QtCore import Qt, QTimer
@@ -263,7 +262,7 @@ class LayoutManager:
         try:
             self.widget_adjuster.adjust_font_and_widget_sizes(self, original_window_width, font_face, font_size)
         except Exception as e:
-            logging.error(f"Exception occurred during layout adjustment: {e}", exc_info=True)
+            logger.error(f"Exception occurred during layout adjustment: {e}", exc_info=True)
 
         # if self.current_widgets.get("central_widget"):
         #    log_widget_hierarchy(self.get_central_widget())

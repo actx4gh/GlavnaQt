@@ -4,7 +4,7 @@ import io
 import pstats
 from functools import wraps
 
-import logger
+from glavnaqt.core import logger
 from glavnaqt.examples.example import main
 
 def profile_function(func):

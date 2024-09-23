@@ -3,8 +3,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QSplitter
 from glavnaqt.ui.splitter_handle import CollapsibleSplitterHandle
-
-logger = logging.getLogger(__name__)
+from glavnaqt.core import logger
 
 class CollapsibleSplitter(QSplitter):
     """

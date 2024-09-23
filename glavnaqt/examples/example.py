@@ -108,7 +108,7 @@ def main():
     thread_manager = ThreadManager()
     #_ = StatusBarManager()
     _ = StatusBarManager(thread_manager=thread_manager)
-    main_window = MainWindow()
+    main_window = MainWindow(thread_manager=thread_manager)
     main_window.show()
 
     if args.cycle_configs:

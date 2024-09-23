@@ -1,4 +1,3 @@
-import logging
 import time
 from copy import deepcopy
 
@@ -6,25 +5,26 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QMainWindow, QStatusBar, QLabel
 
 from glavnaqt.core import config
+from glavnaqt.core import logger
 from glavnaqt.core.event_bus import create_or_get_shared_event_bus
 from glavnaqt.core.event_handling import setup_event_handling, ResizeSignal, handle_resize_event
 from glavnaqt.ui.layout import LayoutManagerFactory
 
-logger = logging.getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, event_bus=None):
+    def __init__(self, event_bus=None, thread_manager=None, *args, **kwargs):
         """
         Initializes the MainWindow with the provided UI configuration.
         """
         logger.debug('Initializing MainWindow')
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.layout_manager_factory = LayoutManagerFactory()
         self.layout_manager = None
         self.ui_config = config.config
         self.event_bus = event_bus or create_or_get_shared_event_bus()
+        self.thread_manager = thread_manager
         self.suppress_logging = False
         self.resize_signal = ResizeSignal()
         setup_event_handling(self, self.resize_signal)
@@ -119,3 +119,12 @@ class MainWindow(QMainWindow):
             self.update_ui(_config)
         self.is_fullscreen = not self.is_fullscreen
         logger.debug(f"UI toggled to {'fullscreen' if self.is_fullscreen else 'original'} layout.")
+
+    def closeEvent(self, event):
+        """
+        Handle the window close event. Shutdown the thread manager to ensure
+        all tasks are completed before closing the application.
+        """
+        logger.info("[MainWindow] Shutting down the application and ThreadManager.")
+        self.thread_manager.shutdown()  # Ensure all threads finish execution before closing
+        super().closeEvent(event)
