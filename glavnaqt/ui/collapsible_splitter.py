@@ -28,7 +28,8 @@ class CollapsibleSplitter(QSplitter):
         super().__init__(orientation, parent)
         self.setHandleWidth(handle_width)
         self.setContentsMargins(0, 0, 0, 0)
-        self.setStyleSheet("background-color: transparent; padding: 0px; margin: 0px;")
+        self.setStyleSheet("padding: 0px; margin: 0px;")
+        #self.setStyleSheet("background-color: transparent; padding: 0px; margin: 0px;")
         self.splitterMoved.connect(self.on_splitter_moved)
         self.is_collapsed = False
         self.identifier = identifier
