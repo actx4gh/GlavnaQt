@@ -26,7 +26,7 @@ class LayoutManager:
     @property
     def widget_adjuster(self):
         if not self._widget_adjuster:
-            self._widget_adjuster = WidgetAdjuster()
+            self._widget_adjuster = WidgetAdjuster(self)
         return self._widget_adjuster
 
     def create_widget(self):
@@ -130,10 +130,6 @@ class LayoutManager:
             if 'h' in dims and not getattr(self, height_attr, None):
                 setattr(self, height_attr, dims['h'])
                 logger.debug(f"Initial {widget_name} height: {dims['h']}px")
-
-        if not self.is_initialized:
-            self.adjust_layout(self.current_config.window_size[0], self.current_config.font_face,
-                               self.current_config.font_size)
             self.is_initialized = True
 
     def create_splitter(self, orientation, name, handle_width, config, identifier="default"):
@@ -260,12 +256,9 @@ class LayoutManager:
             logger.error("main_content_widget is not initialized. Layout adjustment cannot proceed.")
             return
         try:
-            self.widget_adjuster.adjust_font_and_widget_sizes(self, original_window_width, font_face, font_size)
+            self.widget_adjuster.adjust_font_and_widget_sizes(original_window_width, font_face, font_size)
         except Exception as e:
             logger.error(f"Exception occurred during layout adjustment: {e}", exc_info=True)
-
-        # if self.current_widgets.get("central_widget"):
-        #    log_widget_hierarchy(self.get_central_widget())
 
 
 class LayoutManagerFactory:

@@ -26,7 +26,7 @@ def get_dynamic_logger():
 
 # Configure logger function
 def configure_logger(logger, module_name):
-    log_dir = os.path.join(config.CONFIG_DIR, "logs")
+    log_dir = os.path.join(config.config_dir, "logs")
     log_file_path = os.path.join(log_dir, config.LOG_FILE_NAME)
     log_level = getattr(logging, config.LOG_LEVEL.upper(), logging.INFO)
 

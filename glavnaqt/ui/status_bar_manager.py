@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt, QObject, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QFrame, QProgressBar, QSizePolicy
 
-from glavnaqt.core import config
+from glavnaqt.core.config import UIConfiguration
 from glavnaqt.core.event_bus import create_or_get_shared_event_bus
 
 
@@ -11,6 +11,7 @@ class StatusBarManager(QObject):
 
     def __init__(self, thread_manager, event_bus=None):
         super().__init__()
+        self.ui_config = UIConfiguration.get_instance()
         self.thread_manager = thread_manager
         self.event_bus = event_bus or create_or_get_shared_event_bus()
         self.status_bar = None
@@ -36,7 +37,7 @@ class StatusBarManager(QObject):
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
         self.status_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.status_label.setObjectName("status_label")
-        self.status_label.setFont(QFont(config.config.font_face))
+        self.status_label.setFont(QFont(self.ui_config.font_face))
         self.status_label.setFrameShape(QFrame.Shape.NoFrame)
         self.status_label.setContentsMargins(0, 0, 0, 0)
         self.status_label.setStyleSheet("padding: 0px; margin: 0px; border: 0px;")

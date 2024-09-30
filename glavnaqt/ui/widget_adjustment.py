@@ -9,33 +9,32 @@ from glavnaqt.ui.helpers import apply_font
 
 
 class WidgetAdjuster:
-    def __init__(self):
+    def __init__(self, layout_manager):
         self.scaling_factor = None
-        self.layout_manager = None
-
-    def adjust_font_and_widget_sizes(self, layout_manager, original_window_width, font_face, font_size):
         self.layout_manager = layout_manager
+
+    def adjust_font_and_widget_sizes(self, original_window_width, font_face, font_size):
         current_time = time.time()
-        log_required = self._should_log_adjustment(layout_manager, current_time)
+        log_required = self._should_log_adjustment(self.layout_manager, current_time)
         top_bar_font_size = None
         status_bar_font_size = None
         left_sidebar_font_size = None
         right_sidebar_font_size = None
         if log_required:
-            layout_manager.last_resize_log_time = current_time
+            self.layout_manager.last_resize_log_time = current_time
 
-        current_window_width = layout_manager.get_central_widget().width()
+        current_window_width = self.layout_manager.get_central_widget().width()
         self.scaling_factor = self._calculate_scaling_factor_based_on_window(original_window_width,
                                                                              current_window_width,
                                                                              log_required)
 
-        if "top" in layout_manager.current_config.collapsible_sections:
+        if "top" in self.layout_manager.current_config.collapsible_sections:
             top_bar_font_size = self._adjust_bar_height("top", log_required, font_face, font_size)
-        if "bottom" in layout_manager.current_config.collapsible_sections:
+        if "bottom" in self.layout_manager.current_config.collapsible_sections:
             status_bar_font_size = self._adjust_bar_height("bottom", log_required, font_face, font_size)
-        if "left" in layout_manager.current_config.collapsible_sections:
+        if "left" in self.layout_manager.current_config.collapsible_sections:
             left_sidebar_font_size = self._adjust_sidebar_width("left", log_required, font_face, font_size)
-        if "right" in layout_manager.current_config.collapsible_sections:
+        if "right" in self.layout_manager.current_config.collapsible_sections:
             right_sidebar_font_size = self._adjust_sidebar_width("right", log_required, font_face, font_size)
 
         # Apply similar logic to the main content panel

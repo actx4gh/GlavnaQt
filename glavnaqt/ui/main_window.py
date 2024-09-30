@@ -4,8 +4,7 @@ from copy import deepcopy
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QMainWindow, QStatusBar, QLabel
 
-from glavnaqt.core import config
-from glavnaqt.core import logger
+from glavnaqt.core import logger, config
 from glavnaqt.core.event_bus import create_or_get_shared_event_bus
 from glavnaqt.core.event_handling import setup_event_handling, ResizeSignal, handle_resize_event
 from glavnaqt.ui.layout import LayoutManagerFactory
@@ -22,7 +21,7 @@ class MainWindow(QMainWindow):
         super().__init__(*args, **kwargs)
         self.layout_manager_factory = LayoutManagerFactory()
         self.layout_manager = None
-        self.ui_config = config.config
+        self.ui_config = config
         self.event_bus = event_bus or create_or_get_shared_event_bus()
         self.thread_manager = thread_manager
         self.suppress_logging = False
@@ -113,7 +112,7 @@ class MainWindow(QMainWindow):
         if self.is_fullscreen:
             self.update_ui(self.layout_manager.last_config)
         else:
-            _config = deepcopy(self.layout_manager.current_config)
+            _config = self.layout_manager.current_config.copy()
             _config.collapsible_sections = {
                 'main_content': {"alignment": self.ui_config.collapsible_sections["main_content"]["alignment"]}}
             self.update_ui(_config)
