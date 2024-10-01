@@ -74,36 +74,41 @@ class WidgetAdjuster:
             logger.debug(f"Scaling factor: {scaling_factor}")
         return scaling_factor
 
-    def _adjust_bar_height(self, section_name, log_required=False, font_face=None, max_font_size=None):
-        new_font_size = None
-        bar = self.layout_manager.current_widgets[f"{section_name}_widget"]
-        status_label = None
-        status_bar = None
-        padding_factor = 0.2
-        if isinstance(bar, QStatusBar):  # Handling when StatusBarManager is used
-            status_bar = bar
-            status_label = self.layout_manager.current_widgets["status_label"]
-            bar = status_label
-            padding_factor = 0.4
-        if bar is None:
-            return None
-
+    def set_bar_height_to_text_height(self, primary, status_bar=None, status_label=None):
         # Calculate text height based on the font
-        font_metrics = QFontMetrics(bar.font())
+        font_metrics = QFontMetrics(primary.font())
         text_height = font_metrics.height()
-
-        if log_required:
-            logger.debug(f"[{section_name}] Text height: {text_height}px")
-
-        # Adjust widget height based on text height and dynamic padding
-        self._adjust_widget_dimension(status_bar or bar, text_height, padding_factor=padding_factor,
-                                      is_width=False,
-                                      log_required=log_required)
+        if status_bar:
+            padding_factor = 0.4
+        else:
+            padding_factor = 0.2
+        self._adjust_widget_dimension(status_bar or primary, text_height, padding_factor=padding_factor,
+                                      is_width=False)
         if status_bar:
             status_label.setFixedHeight(text_height)
+        return text_height
+
+    def get_widgets_for_section(self, section_name):
+        status_bar = status_label = None
+        primary = self.layout_manager.current_widgets[f"{section_name}_widget"]
+        if isinstance(primary, QStatusBar):
+            status_bar = primary
+            primary = status_label = self.layout_manager.current_widgets["status_label"]
+        widgets = {'primary': primary, 'status_bar': status_bar, 'status_label': status_label}
+        return widgets
+
+    def _adjust_bar_height(self, section_name, log_required=False, font_face=None, max_font_size=None):
+        new_font_size = None
+        widgets = self.get_widgets_for_section(section_name)
+        primary, status_bar, status_label = widgets.values()
+        if primary is None:
+            return None
+
+        text_height = self.set_bar_height_to_text_height(primary, status_bar, status_label)
+        # Calculate text height based on the font
 
         if max_font_size:
-            new_font_size = self._calculate_new_font_size(section_name, bar, text_height, font_face, max_font_size,
+            new_font_size = self._calculate_new_font_size(section_name, primary, text_height, font_face, max_font_size,
                                                           log_required)
         if new_font_size:
             return new_font_size
@@ -121,8 +126,9 @@ class WidgetAdjuster:
         return new_font_size
 
     def _adjust_sidebar_width(self, section_name, log_required, font_face, font_size):
-        sidebar = self.layout_manager.current_widgets.get(f'{section_name}_widget')
-        if sidebar is None:
+        widgets = self.get_widgets_for_section(section_name)
+        primary, status_bar, status_label = widgets.values()
+        if primary is None:
             return None
 
         initial_width = getattr(self.layout_manager, f'initial_{section_name}_widget_width', None)
@@ -136,14 +142,14 @@ class WidgetAdjuster:
             logger.debug(f"[{section_name}] New sidebar width after scaling: {new_sidebar_width}px")
 
         if new_sidebar_width != initial_width:
-            self._adjust_widget_dimension(sidebar, new_sidebar_width, padding_factor=0.1, is_width=True,
+            self._adjust_widget_dimension(primary, new_sidebar_width, padding_factor=0.1, is_width=True,
                                           log_required=log_required)
 
-        new_font_size = calculate_scaling_factor(new_sidebar_width, sidebar.text(), new_sidebar_width, font_face,
+        new_font_size = calculate_scaling_factor(new_sidebar_width, primary.text(), new_sidebar_width, font_face,
                                                  font_size,
                                                  log_required=log_required)
 
-        self._apply_font_size_to_widget(sidebar, new_font_size, log_required, section_name)
+        self._apply_font_size_to_widget(primary, new_font_size, log_required, section_name)
 
         return new_font_size
 

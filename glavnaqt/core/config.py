@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt
 
-from confumo.confumo import Confumo
+from confumo import Confumo
 
 LOGGER_NAME = 'glavnaqt'
 LOG_FILE_NAME = f'{LOGGER_NAME}.log'

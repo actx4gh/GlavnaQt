@@ -130,7 +130,10 @@ class LayoutManager:
             if 'h' in dims and not getattr(self, height_attr, None):
                 setattr(self, height_attr, dims['h'])
                 logger.debug(f"Initial {widget_name} height: {dims['h']}px")
-            self.is_initialized = True
+        for widget in (self.current_widgets.get('top_widget'), self.current_widgets.get('bottom_widget')):
+            if widget:
+                self.widget_adjuster.set_bar_height_to_text_height(widget)
+        self.is_initialized = True
 
     def create_splitter(self, orientation, name, handle_width, config, identifier="default"):
         logger.debug(f'Creating collapsible splitter for {identifier}')

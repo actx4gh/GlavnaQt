@@ -124,6 +124,7 @@ class MainWindow(QMainWindow):
         Handle the window close event. Shutdown the thread manager to ensure
         all tasks are completed before closing the application.
         """
-        logger.info("[MainWindow] Shutting down the application and ThreadManager.")
-        self.thread_manager.shutdown()  # Ensure all threads finish execution before closing
+        if self.thread_manager:
+            logger.info("[MainWindow] Shutting down the ThreadManager.")
+            self.thread_manager.shutdown()  # Ensure all threads finish execution before closing
         super().closeEvent(event)
