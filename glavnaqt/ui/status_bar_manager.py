@@ -61,11 +61,11 @@ class StatusBarManager(QObject):
         self.start_worker(text=initial_text)
 
     def start_busy_indicator(self):
-        if self.busy_indicator and self.status_bar.isVisible():
+        if self.busy_indicator:
             self.busy_indicator.setVisible(True)
 
     def stop_busy_indicator(self):
-        if self.busy_indicator and self.status_bar.isVisible():
+        if self.busy_indicator:
             self.busy_indicator.setVisible(False)
 
     def start_worker(self, *args, **kwargs):

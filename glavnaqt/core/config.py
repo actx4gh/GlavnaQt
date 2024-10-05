@@ -63,7 +63,11 @@ class UIConfiguration(Confumo):
                 "alignment": Qt.AlignmentFlag.AlignCenter
             }
         }
+
+    def initialize(self):
+        """Call this method when you need to explicitly initialize glavnaqt."""
         self._setup_module_attributes()
+        _ = self.config  # Accessing config will trigger lazy initialization
 
     def get_section_widget(self, section_name):
         """

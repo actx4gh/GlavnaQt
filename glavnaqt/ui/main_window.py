@@ -1,5 +1,4 @@
 import time
-from copy import deepcopy
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QMainWindow, QStatusBar, QLabel
@@ -8,7 +7,6 @@ from glavnaqt.core import logger, config
 from glavnaqt.core.event_bus import create_or_get_shared_event_bus
 from glavnaqt.core.event_handling import setup_event_handling, ResizeSignal, handle_resize_event
 from glavnaqt.ui.layout import LayoutManagerFactory
-
 
 
 class MainWindow(QMainWindow):
@@ -50,6 +48,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(100, 100)
         self.layout_manager = self.layout_manager_factory.create_layout_manager("main", self.ui_config)
         self.setCentralWidget(self.layout_manager.get_central_widget())
+        self.event_bus.emit('refresh_image_list')
 
     def _initialize_status_bar(self):
         if not self.status_bar and self.ui_config.enable_status_bar_manager and 'bottom' in self.ui_config.collapsible_sections:

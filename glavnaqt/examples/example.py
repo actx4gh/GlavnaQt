@@ -68,7 +68,6 @@ def main():
     app = QApplication(sys.argv)
 
     # Access values directly from the config object
-    log_level = config.log_level
     cycle_configs_enabled = config.cycle_configs  # Check if cycling configs is enabled
 
     # Create and show the main window
