@@ -49,7 +49,7 @@ class StatusBarManager(QObject):
         self.busy_indicator = QProgressBar(self.status_bar)
         self.busy_indicator.setObjectName('busy_indicator')
         self.busy_indicator.setMaximum(0)  # Indeterminate mode (busy state)
-        self.busy_indicator.setStyleSheet("padding-right: 4px; padding-bottom: 2px")
+        self.busy_indicator.setStyleSheet("padding-right: 4px; padding-bottom: 0px")
         self.busy_indicator.setVisible(False)  # Initially hidden
 
         # Set the minimum width for the busy indicator and allow it to resize appropriately
